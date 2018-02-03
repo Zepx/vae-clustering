@@ -4,7 +4,7 @@ import numpy as np
 import os.path
 
 def stream_print(f, string, pipe_to_file=True):
-    print string
+    print(string)
     if pipe_to_file and f is not None:
         f.write(string + '\n')
         f.flush()
@@ -13,7 +13,7 @@ def test_acc(mnist, sess, qy_logit):
     logits = sess.run(qy_logit, feed_dict={'x:0': mnist.test.images})
     cat_pred = logits.argmax(1)
     real_pred = np.zeros_like(cat_pred)
-    for cat in xrange(logits.shape[1]):
+    for cat in range(logits.shape[1]):
         idx = cat_pred == cat
         lab = mnist.test.labels.argmax(1)[idx]
         if len(lab) == 0:
@@ -46,6 +46,6 @@ def train(fname, mnist, sess_info, epochs):
                       .format('tr_ent', 'tr_loss', 't_ent', 't_loss', 't_acc', 'epoch'))
             stream_print(f, string, i <= iterep)
             string = ('{:10.2e},{:10.2e},{:10.2e},{:10.2e},{:10.2e},{:10d}'
-                      .format(a, b, c, d, e, (i + 1) / iterep))
+                      .format(a, b, c, d, e, int((i + 1) / iterep)))
             stream_print(f, string)
     if f is not None: f.close()

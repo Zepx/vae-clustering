@@ -1,31 +1,31 @@
 import tensorflow as tf
-from tensorbayes.layers import Constant, Placeholder, Dense, GaussianSample
+from tensorbayes.layers import constant, placeholder, dense, gaussian_sample
 from tensorbayes.distributions import log_bernoulli_with_logits, log_normal
-from tensorbayes.tbutils import cross_entropy_with_logits
+from tensorbayes.tfutils import softmax_cross_entropy_with_two_logits
 import numpy as np
 import sys
 
 # vae subgraphs
 def qy_graph(x, k=10):
-    reuse = len(tf.get_collection(tf.GraphKeys.VARIABLES, scope='qy')) > 0
+    reuse = len(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='qy')) > 0
     # -- q(y)
     with tf.variable_scope('qy'):
-        h1 = Dense(x, 512, 'layer1', tf.nn.relu, reuse=reuse)
-        h2 = Dense(h1, 512, 'layer2', tf.nn.relu, reuse=reuse)
-        qy_logit = Dense(h2, k, 'logit', reuse=reuse)
+        h1 = dense(x, 512, 'layer1', tf.nn.relu, reuse=reuse)
+        h2 = dense(h1, 512, 'layer2', tf.nn.relu, reuse=reuse)
+        qy_logit = dense(h2, k, 'logit', reuse=reuse)
         qy = tf.nn.softmax(qy_logit, name='prob')
     return qy_logit, qy
 
 def qz_graph(x, y):
-    reuse = len(tf.get_collection(tf.GraphKeys.VARIABLES, scope='qz')) > 0
+    reuse = len(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='qz')) > 0
     # -- q(z)
     with tf.variable_scope('qz'):
-        xy = tf.concat(1, (x, y), name='xy/concat')
-        h1 = Dense(xy, 512, 'layer1', tf.nn.relu, reuse=reuse)
-        h2 = Dense(h1, 512, 'layer2', tf.nn.relu, reuse=reuse)
-        zm = Dense(h2, 64, 'zm', reuse=reuse)
-        zv = Dense(h2, 64, 'zv', tf.nn.softplus, reuse=reuse)
-        z = GaussianSample(zm, zv, 'z')
+        xy = tf.concat((x, y), 1, name='xy/concat')
+        h1 = dense(xy, 512, 'layer1', tf.nn.relu, reuse=reuse)
+        h2 = dense(h1, 512, 'layer2', tf.nn.relu, reuse=reuse)
+        zm = dense(h2, 64, 'zm', reuse=reuse)
+        zv = dense(h2, 64, 'zv', tf.nn.softplus, reuse=reuse)
+        z = gaussian_sample(zm, zv, 'z')
     return z, zm, zv
 
 def labeled_loss(x, px_logit, z, zm, zv, zm_prior, zv_prior):
